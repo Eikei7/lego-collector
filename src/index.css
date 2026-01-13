@@ -1,5 +1,7 @@
+@import url(https://fonts.googleapis.com/css?family=Noto+Sans+Caucasian+Albanian:regular);
+
 :root {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Noto Sans Caucasian Albanian', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 

@@ -15,7 +15,7 @@ function App() {
       try {
         setCollection(JSON.parse(savedData));
       } catch (e) {
-        console.error("Kunde inte ladda samling från localStorage", e);
+        console.error("Could not load collection from localStorage", e);
       }
     }
   }, []);
@@ -36,7 +36,7 @@ function App() {
       const data = await response.json();
       setSearchResults(data.results || []);
     } catch (error) {
-      alert("Ett fel uppstod vid sökning. Kontrollera din API-nyckel.");
+      alert("An error occurred while searching. Check your API key.");
     } finally {
       setIsLoading(false);
     }
@@ -47,12 +47,12 @@ function App() {
     if (!exists) {
       setCollection([...collection, set]);
     } else {
-      alert("Detta set finns redan i din samling!");
+      alert("This set is already in your collection!");
     }
   };
 
   const removeFromCollection = (setNum) => {
-    if (window.confirm("Vill du verkligen ta bort detta set?")) {
+    if (window.confirm("Do you really want to remove this set?")) {
       setCollection(collection.filter(item => item.set_num !== setNum));
     }
   };
@@ -78,65 +78,79 @@ function App() {
       try {
         const json = JSON.parse(event.target.result);
         if (Array.isArray(json)) {
-          if (window.confirm("Detta kommer att ersätta din nuvarande samling. Fortsätt?")) {
+          if (window.confirm("This will replace your current collection. Continue?")) {
             setCollection(json);
           }
         } else {
-          alert("Felaktigt filformat. JSON-filen måste innehålla en lista.");
+          alert("Invalid file format. The JSON file must contain an array.");
         }
       } catch (err) {
-        alert("Kunde inte läsa filen. Se till att det är en giltig JSON.");
+        alert("Could not read the file. Make sure it's a valid JSON.");
       }
     };
     reader.readAsText(file);
   };
+  
   const totalParts = collection.reduce((acc, set) => acc + (set.num_parts || 0), 0);
 
   return (
     <div className="container">
       <header>
-        <h1>🧱 Lego Collector</h1>
-        <p>Hantera din samling lokalt i webbläsaren.</p>
+        <h1>🧱 LEGO® Collector</h1>
+        <p>Manage your collection locally in your browser.</p>
       </header>
 
       <section className="search-section">
-  <h2>Sök i Rebrickable-databasen</h2>
+  <h2>Search Rebrickable Database</h2>
   <form onSubmit={handleSearch} className="input-group">
     <input 
       type="text" 
-      placeholder="Set-nummer eller namn (t.ex. 10265)..." 
+      placeholder="Set number or name (e.g. 10265)..." 
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
     />
     <button type="submit" disabled={isLoading}>
-      Sök
+      Search
     </button>
   </form>
 
   {isLoading ? (
     <div className="spinner-container">
       <span className="loader"></span>
-      <p className="loading-text">Letar efter klossar...</p>
+      <p className="loading-text">Looking for bricks...</p>
     </div>
   ) : (
     searchResults.length > 0 && (
       <div className="lego-grid" style={{ marginTop: '20px' }}>
-        {searchResults.map(set => (
-          <div key={set.set_num} className="lego-card">
-            <img src={set.set_img_url || 'https://via.placeholder.com/150?text=No+Image'} alt={set.name} />
-            <div className="card-info">
-              <h3>{set.name}</h3>
-              <p>#{set.set_num}</p>
-              <p>{set.num_parts} bitar ({set.year})</p>
+        {searchResults.map(set => {
+          const isInCollection = collection.find(item => item.set_num === set.set_num);
+          return (
+            <div key={set.set_num} className="lego-card">
+              <img src={set.set_img_url || 'https://via.placeholder.com/150?text=No+Image'} alt={set.name} />
+              <div className="card-info">
+                <h3>{set.name}</h3>
+                <p>#{set.set_num}</p>
+                <p>{set.num_parts} pieces ({set.year})</p>
+              </div>
+              <button 
+                onClick={() => addToCollection(set)}
+                disabled={isInCollection}
+                style={{
+                  backgroundColor: isInCollection ? '#ccc' : '',
+                  cursor: isInCollection ? 'not-allowed' : 'pointer',
+                  opacity: isInCollection ? 0.6 : 1
+                }}
+              >
+                {isInCollection ? '✓ Added' : '+ Add'}
+              </button>
             </div>
-            <button onClick={() => addToCollection(set)}>+ Lägg till</button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     )
   )}
   {!isLoading && searchQuery && searchResults.length === 0 && (
-  <p style={{ textAlign: 'center', marginTop: '20px' }}>Inga resultat hittades för "{searchQuery}".</p>
+  <p style={{ textAlign: 'center', marginTop: '20px' }}>No results found for "{searchQuery}".</p>
 )}
 </section>
 
@@ -145,15 +159,15 @@ function App() {
       <section className="collection-section">
   <div className="collection-header">
     <div>
-      <h2>Min samling ({collection.length})</h2>
+      <h2>My Collection ({collection.length})</h2>
       <p className="total-stats">
-        Totalt: <strong>{totalParts.toLocaleString()}</strong> bitar
+        Total: <strong>{totalParts.toLocaleString()}</strong> pieces
       </p>
     </div>
     <div className="data-actions">
-      <button onClick={exportJSON} className="secondary-btn">Exportera JSON</button>
+      <button onClick={exportJSON} className="secondary-btn">Export JSON</button>
       <label className="file-upload">
-        Importera JSON
+        Import JSON
         <input type="file" accept=".json" onChange={importJSON} hidden />
       </label>
     </div>
@@ -161,7 +175,7 @@ function App() {
 
         {collection.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#666', marginTop: '40px' }}>
-            Din samling är tom. Sök ovan för att lägga till dina första set!
+            Your collection is empty. Search above to add your first sets!
           </p>
         ) : (
           <div className="lego-grid">
@@ -171,12 +185,13 @@ function App() {
                 <div className="card-info">
                   <h3>{set.name}</h3>
                   <p>#{set.set_num}</p>
+                  <p>{set.num_parts} pieces ({set.year})</p>
                 </div>
                 <button 
                   onClick={() => removeFromCollection(set.set_num)}
                   style={{ backgroundColor: '#ff4444' }}
                 >
-                  Ta bort
+                  Remove
                 </button>
               </div>
             ))}
@@ -185,7 +200,7 @@ function App() {
       </section>
 
       <footer>
-        <p><small>Data tillhandahålls av Rebrickable API</small></p>
+        <p><small>Data provided by Rebrickable API</small></p>
       </footer>
     </div>
   );
