@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 
-/**
- * App Komponent
- */
 function App() {
-  // --- STATE ---
   const [collection, setCollection] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -13,9 +9,6 @@ function App() {
 
   const API_KEY = import.meta.env.VITE_REBRICKABLE_API_KEY;
 
-  // --- EFFECTS (LocalStorage) ---
-  
-  // 1. Ladda samlingen när appen startar
   useEffect(() => {
     const savedData = localStorage.getItem('lego-collection');
     if (savedData) {
@@ -27,15 +20,10 @@ function App() {
     }
   }, []);
 
-  // 2. Spara till localStorage varje gång samlingen ändras
   useEffect(() => {
     localStorage.setItem('lego-collection', JSON.stringify(collection));
   }, [collection]);
 
-
-  // --- FUNKTIONER ---
-
-  // Sök efter set via Rebrickable API
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery) return;
@@ -54,7 +42,6 @@ function App() {
     }
   };
 
-  // Lägg till i samlingen (förhindra dubbletter)
   const addToCollection = (set) => {
     const exists = collection.find(item => item.set_num === set.set_num);
     if (!exists) {
@@ -64,14 +51,11 @@ function App() {
     }
   };
 
-  // Ta bort från samlingen
   const removeFromCollection = (setNum) => {
     if (window.confirm("Vill du verkligen ta bort detta set?")) {
       setCollection(collection.filter(item => item.set_num !== setNum));
     }
   };
-
-  // --- IMPORT & EXPORT ---
 
   const exportJSON = () => {
     const dataStr = JSON.stringify(collection, null, 2);
@@ -108,7 +92,6 @@ function App() {
   };
   const totalParts = collection.reduce((acc, set) => acc + (set.num_parts || 0), 0);
 
-  // --- RENDER ---
   return (
     <div className="container">
       <header>
@@ -116,9 +99,8 @@ function App() {
         <p>Hantera din samling lokalt i webbläsaren.</p>
       </header>
 
-      {/* SÖKSEKTION */}
       <section className="search-section">
-  <h2>Sök Rebrickable Database</h2>
+  <h2>Sök i Rebrickable-databasen</h2>
   <form onSubmit={handleSearch} className="input-group">
     <input 
       type="text" 
@@ -160,11 +142,10 @@ function App() {
 
       <hr />
 
-      {/* SAMLINGS-SEKTION */}
       <section className="collection-section">
   <div className="collection-header">
     <div>
-      <h2>Min Samling ({collection.length})</h2>
+      <h2>Min samling ({collection.length})</h2>
       <p className="total-stats">
         Totalt: <strong>{totalParts.toLocaleString()}</strong> bitar
       </p>
