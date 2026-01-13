@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.gitattributes
+eslint.config.js
+vite.config.js
 
 # Editor directories and files
 .vscode/*
