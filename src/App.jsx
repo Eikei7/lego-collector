@@ -11,6 +11,7 @@ function App() {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [themeNames, setThemeNames] = useState({});
+  const [isListView, setIsListView] = useState(false); // Ny state för listvy
 
   const API_KEY = import.meta.env.VITE_REBRICKABLE_API_KEY;
 
@@ -20,6 +21,7 @@ function App() {
     const savedNames = localStorage.getItem('lego-collection-names');
     const savedActiveTab = localStorage.getItem('lego-active-tab');
     const savedThemes = localStorage.getItem('lego-theme-names');
+    const savedView = localStorage.getItem('lego-view-mode'); // Hämta sparad vy
     
     if (savedCollections) {
       try { setCollections(JSON.parse(savedCollections)); } catch (e) { setCollections([[]]); }
@@ -34,6 +36,10 @@ function App() {
     if (savedThemes) {
       try { setThemeNames(JSON.parse(savedThemes)); } catch (e) { setThemeNames({}); }
     }
+
+    if (savedView) {
+      setIsListView(savedView === 'list');
+    }
   }, []);
 
   // --- PERSISTENCE & THEME FETCHING ---
@@ -42,6 +48,7 @@ function App() {
     localStorage.setItem('lego-collection-names', JSON.stringify(collectionNames));
     localStorage.setItem('lego-active-tab', activeTab.toString());
     localStorage.setItem('lego-theme-names', JSON.stringify(themeNames));
+    localStorage.setItem('lego-view-mode', isListView ? 'list' : 'grid'); // Spara vy-val
     
     const currentCollection = collections[activeTab] || [];
     const uniqueThemeIds = [...new Set(currentCollection.map(set => set.theme_id))];
@@ -60,7 +67,7 @@ function App() {
         }
       });
     }
-  }, [collections, collectionNames, activeTab, themeNames, API_KEY]);
+  }, [collections, collectionNames, activeTab, themeNames, API_KEY, isListView]);
 
   // --- SEARCH FUNCTIONS ---
   const handleSearch = async (e) => {
@@ -288,11 +295,21 @@ function App() {
       <section className="collection-section">
         <div className="collection-header">
           <div>
-            <h2>{collectionNames[activeTab]} ({filteredCollection.length}{selectedTheme ? ` of ${currentCollection.length}` : ''})</h2>
-            <p className="total-stats">
-              Total: <strong>{filteredTotalParts.toLocaleString()}</strong> pieces
-              {selectedTheme && ` (${totalParts.toLocaleString()} total)`}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+        <h2>{collectionNames[activeTab]} ({filteredCollection.length}{selectedTheme ? ` of ${currentCollection.length}` : ''})</h2>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <p className="total-stats">
+            Total: <strong>{filteredTotalParts.toLocaleString()}</strong> pieces
+          </p>
+          <button 
+            onClick={() => setIsListView(!isListView)} 
+            className="view-toggle-btn"
+            title={isListView ? 'Switch to Grid View' : 'Switch to List View'}
+          >
+            {isListView ? '⊞' : '☰'}
+          </button>
+        </div>
+      </div>
             {themes.length > 0 && (
               <div className="theme-filters">
                 <button onClick={() => setSelectedTheme(null)} className={selectedTheme === null ? 'theme-tag active' : 'theme-tag'}>All Themes</button>
@@ -305,27 +322,26 @@ function App() {
             )}
           </div>
           <div className="data-actions">
-            <button onClick={exportJSON} className="secondary-btn">Export JSON</button>
-            <label className="file-upload">
-              Import to This Tab
-              <input type="file" accept=".json" onChange={importJSON} hidden />
-            </label>
-          </div>
+          <button onClick={exportJSON} className="secondary-btn">Export JSON</button>
+          <label className="file-upload">
+            Import to This Tab
+            <input type="file" accept=".json" onChange={importJSON} hidden />
+          </label>
         </div>
+      </div>
 
         {filteredCollection.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#666', marginTop: '40px' }}>
             {selectedTheme ? 'No sets found in this theme.' : 'This collection is empty.'}
           </p>
         ) : (
-          <div className="lego-grid">
+          <div className={isListView ? "lego-list-view" : "lego-grid"}>
             {filteredCollection.map(set => (
-              <div key={set.set_num} className="lego-card saved">
+              <div key={set.set_num} className={isListView ? "lego-list-item" : "lego-card saved"}>
                 <img src={set.set_img_url} alt={set.name} />
                 <div className="card-info">
                   <h3>{set.name}</h3>
-                  <p>#{set.set_num} ({set.year})</p>
-                  <p>{set.num_parts} pieces</p>
+                  <p>#{set.set_num} ({set.year}) | {set.num_parts} pieces</p>
                 </div>
                 <button onClick={() => removeFromCollection(set.set_num)} className="btn-remove">Remove</button>
               </div>

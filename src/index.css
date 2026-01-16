@@ -210,7 +210,7 @@ input[type="text"]:focus {
 
 .lego-card img {
   aspect-ratio: 1/1;
-  background-color: #f9f9f9;
+  background-color: #fff;
   border-radius: 6px;
   height: 160px;
   margin-bottom: 15px;
@@ -228,6 +228,63 @@ input[type="text"]:focus {
   gap: clamp(15px, 3vw, 25px);
   grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
   margin-top: 20px;
+}
+
+.lego-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.lego-list-item {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg);
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  gap: 20px;
+}
+
+.lego-list-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.lego-list-item .card-info {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.lego-list-item h3 {
+  margin: 0;
+  height: auto;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.lego-list-item p {
+  margin: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .lego-list-item {
+    flex-wrap: wrap;
+    padding: 15px;
+  }
+  .lego-list-item .card-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
 }
 
 .loader {
@@ -466,13 +523,39 @@ input[type="text"]:focus {
   color: #666;
   display: inline-block;
   font-size: clamp(1rem, 3vw, 1.1rem);
-  margin: 10px 0 0 0;
+  margin: 0;
   padding: 8px 16px;
   text-align: center;
 }
 
 .total-stats strong {
   color: var(--lego-blue);
+}
+
+.view-toggle-btn {
+  align-items: center;
+  background-color: #eee;
+  border-radius: 50%;
+  border: none;
+  color: #444;
+  cursor: pointer;
+  display: flex;
+  font-size: 1.2rem;
+  height: 40px;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0;
+  transition: all 0.2s;
+  width: 40px;
+}
+
+.view-toggle-btn:hover {
+  background-color: #ddd;
+  transform: scale(1.05);
+}
+
+.view-toggle-btn:active {
+  transform: scale(0.95);
 }
 
 /* --- Media Queries --- */
