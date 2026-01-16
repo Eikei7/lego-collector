@@ -1,58 +1,46 @@
+/* --- Globala Inställningar --- */
 @import url(https://fonts.googleapis.com/css?family=Noto+Sans+Caucasian+Albanian:regular);
 
 :root {
-  font-family: 'Noto Sans Caucasian Albanian', system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  --lego-blue: #0055ad;
-  --lego-blue-hover: #003d7a;
-  --lego-red: #d32f2f;
-  --lego-green: #28a745;
   --bg-color: #f4f7f6;
   --card-bg: #ffffff;
+  --lego-blue-hover: #003d7a;
+  --lego-blue: #0055ad;
+  --lego-green: #28a745;
+  --lego-red: #d32f2f;
   --text-main: #213547;
+  font-family: 'Noto Sans Caucasian Albanian', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* --- Element & Klasser (Bokstavsordning) --- */
+
+@keyframes rotation {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 body {
-  margin: 0;
   background-color: var(--bg-color);
   color: var(--text-main);
+  margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-h1 {
-  font-size: clamp(1.8rem, 5vw, 2.5rem);
-  line-height: 1.1;
-  margin-bottom: 0.5rem;
-  word-break: break-word;
-}
-
 button {
-  padding: 10px 16px;
   background-color: var(--lego-blue);
-  color: white;
-  border: none;
   border-radius: 6px;
+  border: none;
+  color: white;
   cursor: pointer;
-  font-weight: bold;
   font-size: clamp(0.85rem, 3vw, 0.9rem);
+  font-weight: bold;
+  min-height: 44px;
+  padding: 10px 16px;
   transition: background-color 0.2s, transform 0.1s;
   white-space: nowrap;
-  min-height: 44px;
-}
-
-button:hover {
-  background-color: var(--lego-blue-hover);
 }
 
 button:active {
@@ -64,173 +52,52 @@ button:disabled {
   cursor: not-allowed;
 }
 
-input[type="text"] {
-  flex: 1;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s;
-  min-height: 44px;
-  box-sizing: border-box;
-  width: 100%;
+button:hover {
+  background-color: var(--lego-blue-hover);
+  color: white;
 }
 
-input[type="text"]:focus {
-  border-color: var(--lego-blue);
+.btn-disabled {
+  background-color: #ccc !important;
+  cursor: not-allowed;
 }
 
-.search-section {
-  background: var(--card-bg);
-  padding: clamp(15px, 4vw, 25px);
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  margin-bottom: 30px;
-  overflow: hidden;
-}
-
-.input-group {
-  display: flex;
-  gap: 12px;
-  margin: 15px 0;
-  width: 100%;
-}
-
-.data-actions {
-  display: flex;
-  gap: 10px;
-  min-width: 0;
-  flex-wrap: wrap;
-}
-
-.lego-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
-  gap: clamp(15px, 3vw, 25px);
-  margin-top: 20px;
-}
-
-.lego-card {
-  background: var(--card-bg);
-  border-radius: 10px;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  transition: transform 0.2s, box-shadow 0.2s;
-  height: 100%;
-  min-height: 320px;
-}
-
-.lego-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
-
-.lego-card img {
-  width: 100%;
-  height: 160px;
-  object-fit: contain;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  margin-bottom: 15px;
-  aspect-ratio: 1/1;
+.btn-remove {
+  background-color: var(--lego-red);
 }
 
 .card-info {
   flex-grow: 1;
-  margin-bottom: 15px;
   overflow: hidden;
 }
 
 .card-info h3 {
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
-  margin: 0 0 8px 0;
   display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
   height: 2.8em;
   line-height: 1.4;
+  margin: 0 0 8px 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
 }
 
 .card-info p {
-  margin: 2px 0;
-  font-size: clamp(0.8rem, 2.5vw, 0.85rem);
   color: #666;
+  font-size: clamp(0.8rem, 2.5vw, 0.85rem);
+  margin: 2px 0;
 }
 
-.secondary-btn {
-  background-color: #6c757d;
-}
-
-.file-upload {
-  display: inline-flex;
-  padding: 10px 16px;
-  background-color: var(--lego-green);
-  color: white;
-  border-radius: 6px;
+.clear-input-btn {
+  background: none !important;
+  border: none !important;
+  color: #999 !important;
   cursor: pointer;
-  font-weight: bold;
-  font-size: clamp(0.85rem, 3vw, 0.9rem);
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.file-upload input {
+  font-size: 20px !important;
+  padding: 0 !important;
   position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
-
-hr {
-  margin: 40px 0;
-  border: 0;
-  border-top: 2px solid #eee;
-}
-
-footer {
-  text-align: center;
-  padding: 30px 0;
-  color: #888;
-  font-size: 0.9rem;
-}
-
-.spinner-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
-
-.loader {
-  width: 48px;
-  height: 48px;
-  border: 5px solid #FFF;
-  border-bottom-color: var(--lego-blue);
-  border-radius: 50%;
-  display: inline-block;
-  box-sizing: border-box;
-  animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-  margin-top: 15px;
-  font-weight: bold;
-  color: var(--lego-blue);
-  text-align: center;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .collection-header {
@@ -248,111 +115,227 @@ footer {
   align-self: flex-start;
 }
 
-.total-stats {
-  margin: 10px 0 0 0;
-  color: #666;
-  font-size: clamp(1rem, 3vw, 1.1rem);
-  background: #eee;
-  padding: 8px 16px;
-  border-radius: 20px;
-  display: inline-block;
-  text-align: center;
+.container {
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 20px;
+  width: 100%;
 }
 
-.total-stats strong {
-  color: var(--lego-blue);
-}
-
-.theme-buttons {
+.data-actions {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 10px;
-  overflow-x: auto;
-  padding-bottom: 5px;
+  gap: 10px;
+  min-width: 0;
 }
 
-.theme-buttons button {
-  padding: 6px 12px;
-  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  background-color: white;
-  color: #333;
+.file-upload {
+  align-items: center;
+  background-color: var(--lego-green);
+  border-radius: 6px;
+  color: white;
   cursor: pointer;
-  font-weight: normal;
+  display: inline-flex;
+  font-size: clamp(0.85rem, 3vw, 0.9rem);
+  font-weight: bold;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  text-align: center;
   white-space: nowrap;
 }
 
-.tabs-container {
+.file-upload input {
+  height: 100%;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+footer {
+  color: #888;
+  font-size: 0.9rem;
+  padding: 30px 0;
+  text-align: center;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+hr {
+  border-top: 2px solid #eee;
+  border: 0;
+  margin: 40px 0;
+}
+
+input[type="text"] {
+  border-radius: 6px;
+  border: 2px solid #ddd;
+  box-sizing: border-box;
+  flex: 1;
+  font-size: 1rem;
+  min-height: 44px;
+  outline: none;
+  padding: 12px;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+input[type="text"]:focus {
+  border-color: var(--lego-blue);
+}
+
+.input-group {
+  display: flex;
+  gap: 12px;
+  margin: 15px 0;
+  width: 100%;
+}
+
+.lego-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 320px;
+  padding: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.lego-card img {
+  aspect-ratio: 1/1;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  height: 160px;
+  margin-bottom: 15px;
+  object-fit: contain;
+  width: 100%;
+}
+
+.lego-card:hover {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  transform: translateY(-4px);
+}
+
+.lego-grid {
+  display: grid;
+  gap: clamp(15px, 3vw, 25px);
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  margin-top: 20px;
+}
+
+.loader {
+  animation: rotation 1s linear infinite;
+  border-bottom-color: var(--lego-blue);
+  border-radius: 50%;
+  border: 5px solid #FFF;
+  box-sizing: border-box;
+  display: inline-block;
+  height: 48px;
+  width: 48px;
+}
+
+.loading-text {
+  color: var(--lego-blue);
+  font-weight: bold;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.search-section {
   background: var(--card-bg);
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   margin-bottom: 30px;
-  padding: 0;
   overflow: hidden;
+  padding: clamp(15px, 4vw, 25px);
 }
 
-.tabs-header {
+.secondary-btn {
+  background-color: #6c757d;
+}
+
+.spinner-container {
+  align-items: center;
   display: flex;
   flex-direction: column;
-  padding: 15px;
-  border-bottom: 2px solid #eee;
-  gap: 15px;
+  justify-content: center;
+  padding: 40px;
 }
 
-.tabs-list {
-  display: flex;
-  gap: 5px;
-  flex-wrap: nowrap;
-  align-items: center;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #ccc transparent;
-  padding-bottom: 10px;
-  margin-bottom: -10px;
+.tab-add {
+  background-color: var(--lego-green);
+  border-radius: 6px;
+  border: none;
+  color: white;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 10px 15px;
 }
 
-.tabs-list::-webkit-scrollbar {
-  height: 4px;
-}
-
-.tabs-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.tabs-list::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 2px;
+.tab-add:hover {
+  background-color: #218838;
 }
 
 .tab-button {
-  position: relative;
-  padding: 10px 35px 10px 12px;
   background-color: #f0f0f0;
-  color: #666;
-  border: none;
-  border-radius: 6px 6px 0 0;
   border-bottom: 3px solid transparent;
-  transition: all 0.2s;
-  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  border-radius: 6px 6px 0 0;
+  border: none;
+  color: #666;
   flex-shrink: 0;
-  white-space: nowrap;
-  min-width: 120px;
+  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   max-width: 200px;
+  min-width: 120px;
   overflow: hidden;
+  padding: 10px 35px 10px 12px;
+  position: relative;
   text-overflow: ellipsis;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .tab-button.active {
   background-color: white;
-  color: var(--lego-blue);
   border-bottom: 3px solid var(--lego-blue);
+  color: var(--lego-blue);
   font-weight: bold;
 }
 
 .tab-button:hover:not(.active) {
   background-color: #e6e6e6;
+}
+
+.tab-close {
+  align-items: center;
+  background: none;
+  color: #999;
+  display: flex;
+  font-size: 1.2rem;
+  height: 20px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  z-index: 2;
+}
+
+.tab-close:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--lego-red);
 }
 
 .tab-count {
@@ -362,20 +345,29 @@ footer {
   opacity: 0.8;
 }
 
+.tab-import {
+  align-self: stretch;
+  display: flex;
+}
+
+.tab-import .file-upload {
+  width: 100%;
+}
+
 .tab-rename {
-  position: absolute;
-  top: 50%;
-  right: 25px;
-  transform: translateY(-50%);
+  align-items: center;
   background: none;
   color: #666;
-  padding: 0;
-  width: 20px;
-  height: 20px;
   display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 0.8rem;
+  height: 20px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
   z-index: 2;
 }
 
@@ -383,151 +375,190 @@ footer {
   background-color: rgba(0,0,0,0.1);
 }
 
-.tab-close {
-  position: absolute;
-  top: 50%;
-  right: 5px;
-  transform: translateY(-50%);
-  background: none;
-  color: #999;
+.tabs-container {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+  overflow: hidden;
   padding: 0;
-  width: 20px;
-  height: 20px;
+}
+
+.tabs-header {
+  border-bottom: 2px solid #eee;
   display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 15px;
+}
+
+.tabs-list {
   align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  z-index: 2;
-}
-
-.tab-close:hover {
-  background-color: rgba(220, 53, 69, 0.1);
-  color: var(--lego-red);
-}
-
-.tab-add {
-  padding: 10px 15px;
-  background-color: var(--lego-green);
-  color: white;
-  border-radius: 6px;
-  border: none;
-  font-size: 1.2rem;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-
-.tab-add:hover {
-  background-color: #218838;
-}
-
-.tab-import {
   display: flex;
-  align-self: stretch;
+  gap: 5px;
+  flex-wrap: nowrap;
+  margin-bottom: -10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-color: #ccc transparent;
+  scrollbar-width: thin;
 }
 
-.tab-import .file-upload {
-  width: 100%;
+.tabs-list::-webkit-scrollbar {
+  height: 4px;
 }
+
+.tabs-list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 2px;
+}
+
+.tabs-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.theme-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.theme-buttons button {
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  color: #333;
+  cursor: pointer;
+  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  font-weight: normal;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.theme-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.theme-tag {
+  background: #fff;
+  border-radius: 15px;
+  border: 1px solid #ddd;
+  color: #444;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.theme-tag.active {
+  background: var(--lego-blue);
+  border-color: var(--lego-blue);
+  color: #fff;
+}
+
+.total-stats {
+  background: #eee;
+  border-radius: 20px;
+  color: #666;
+  display: inline-block;
+  font-size: clamp(1rem, 3vw, 1.1rem);
+  margin: 10px 0 0 0;
+  padding: 8px 16px;
+  text-align: center;
+}
+
+.total-stats strong {
+  color: var(--lego-blue);
+}
+
+/* --- Media Queries --- */
 
 @media (max-width: 480px) {
   .container {
     padding: 15px 10px;
   }
-  
-  .lego-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .lego-card {
     min-height: 300px;
   }
-  
+  .lego-grid {
+    grid-template-columns: 1fr;
+  }
+  .search-section, .tabs-container {
+    border-radius: 8px;
+  }
   .tab-button {
     min-width: 100px;
     padding: 10px 30px 10px 10px;
   }
-  
-  .search-section, .tabs-container {
-    border-radius: 8px;
-  }
-  
 }
 
 @media (min-width: 481px) and (max-width: 768px) {
-  .container {
-    padding: 20px 15px;
-  }
-  
-  .lego-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  }
-  
   .collection-header .data-actions {
     flex-direction: row;
     width: 100%;
   }
-  
+  .container {
+    padding: 20px 15px;
+  }
   .data-actions button,
   .data-actions .file-upload {
     flex: 1;
+  }
+  .lego-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   }
 }
 
 @media (min-width: 769px) {
   .collection-header {
-    flex-direction: row;
     align-items: flex-start;
+    flex-direction: row;
     justify-content: space-between;
   }
-  
   .collection-header > div:first-child {
     width: auto;
   }
-  
   .collection-header .data-actions {
     align-self: center;
   }
-  
-  .tabs-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+  .tab-button {
+    max-width: 180px;
   }
-  
   .tab-import {
     align-self: center;
   }
-  
-  .tab-button {
-    max-width: 180px;
+  .tabs-header {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
   }
 }
 
 @media (max-width: 320px) {
+  button, .file-upload {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+  }
   .container {
     padding: 10px 5px;
   }
-  
-  button, .file-upload {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-  }
-  
   .tab-button {
-    min-width: 90px;
     font-size: 0.8rem;
+    min-width: 90px;
     padding: 8px 25px 8px 8px;
   }
-  
-  .tab-rename {
-    right: 20px;
-    width: 16px;
-    height: 16px;
-  }
-  
   .tab-close {
+    height: 16px;
     right: 4px;
     width: 16px;
+  }
+  .tab-rename {
     height: 16px;
+    right: 20px;
+    width: 16px;
   }
 }

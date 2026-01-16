@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './index.css';
 
 function App() {
-  const [collections, setCollections] = useState([]);
+  const [collections, setCollections] = useState([[]]);
   const [activeTab, setActiveTab] = useState(0);
   const [collectionNames, setCollectionNames] = useState(['My Collection']);
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,43 +14,38 @@ function App() {
 
   const API_KEY = import.meta.env.VITE_REBRICKABLE_API_KEY;
 
+  // --- INITIAL LOAD ---
   useEffect(() => {
     const savedCollections = localStorage.getItem('lego-collections');
     const savedNames = localStorage.getItem('lego-collection-names');
     const savedActiveTab = localStorage.getItem('lego-active-tab');
+    const savedThemes = localStorage.getItem('lego-theme-names');
     
     if (savedCollections) {
-      try {
-        const parsed = JSON.parse(savedCollections);
-        setCollections(parsed);
-      } catch (e) {
-        setCollections([[]]);
-      }
-    } else {
-      setCollections([[]]);
-    }
+      try { setCollections(JSON.parse(savedCollections)); } catch (e) { setCollections([[]]); }
+    } else { setCollections([[]]); }
     
     if (savedNames) {
-      try {
-        setCollectionNames(JSON.parse(savedNames));
-      } catch (e) {
-        setCollectionNames(['My Collection']);
-      }
+      try { setCollectionNames(JSON.parse(savedNames)); } catch (e) { setCollectionNames(['My Collection']); }
     }
     
-    if (savedActiveTab) {
-      setActiveTab(parseInt(savedActiveTab));
+    if (savedActiveTab) { setActiveTab(parseInt(savedActiveTab)); }
+
+    if (savedThemes) {
+      try { setThemeNames(JSON.parse(savedThemes)); } catch (e) { setThemeNames({}); }
     }
   }, []);
 
+  // --- PERSISTENCE & THEME FETCHING ---
   useEffect(() => {
     localStorage.setItem('lego-collections', JSON.stringify(collections));
     localStorage.setItem('lego-collection-names', JSON.stringify(collectionNames));
     localStorage.setItem('lego-active-tab', activeTab.toString());
+    localStorage.setItem('lego-theme-names', JSON.stringify(themeNames));
     
     const currentCollection = collections[activeTab] || [];
     const uniqueThemeIds = [...new Set(currentCollection.map(set => set.theme_id))];
-    const missingThemeIds = uniqueThemeIds.filter(id => !themeNames[id]);
+    const missingThemeIds = uniqueThemeIds.filter(id => id && !themeNames[id]);
     
     if (missingThemeIds.length > 0) {
       missingThemeIds.forEach(async (themeId) => {
@@ -65,8 +60,9 @@ function App() {
         }
       });
     }
-  }, [collections, collectionNames, activeTab]);
+  }, [collections, collectionNames, activeTab, themeNames, API_KEY]);
 
+  // --- SEARCH FUNCTIONS ---
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery) return;
@@ -86,13 +82,20 @@ function App() {
     }
   };
 
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setHasSearched(false);
+  };
+
+  // --- COLLECTION FUNCTIONS ---
   const addToCollection = (set) => {
     const newCollections = [...collections];
-    const currentCollection = newCollections[activeTab] || [];
-    const exists = currentCollection.find(item => item.set_num === set.set_num);
+    const currentColl = newCollections[activeTab] || [];
+    const exists = currentColl.find(item => item.set_num === set.set_num);
     
     if (!exists) {
-      newCollections[activeTab] = [...currentCollection, set];
+      newCollections[activeTab] = [...currentColl, set];
       setCollections(newCollections);
     } else {
       alert("This set is already in this collection!");
@@ -102,51 +105,15 @@ function App() {
   const removeFromCollection = (setNum) => {
     if (window.confirm("Do you really want to remove this set?")) {
       const newCollections = [...collections];
-      const currentCollection = newCollections[activeTab] || [];
-      newCollections[activeTab] = currentCollection.filter(item => item.set_num !== setNum);
+      newCollections[activeTab] = (newCollections[activeTab] || []).filter(item => item.set_num !== setNum);
       setCollections(newCollections);
     }
   };
 
-  const exportJSON = () => {
-    const currentCollection = collections[activeTab] || [];
-    const dataStr = JSON.stringify(currentCollection, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${collectionNames[activeTab] || 'lego-collection'}-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const importJSON = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target.result);
-        if (Array.isArray(json)) {
-          const newCollections = [...collections];
-          newCollections[activeTab] = json;
-          setCollections(newCollections);
-        } else {
-          alert("Invalid file format. The JSON file must contain an array.");
-        }
-      } catch (err) {
-        alert("Could not read the file. Make sure it's a valid JSON.");
-      }
-    };
-    reader.readAsText(file);
-  };
-
+  // --- TAB FUNCTIONS ---
   const addNewTab = () => {
-    const newName = `Collection ${collections.length + 1}`;
     setCollections([...collections, []]);
-    setCollectionNames([...collectionNames, newName]);
+    setCollectionNames([...collectionNames, `Collection ${collections.length + 1}`]);
     setActiveTab(collections.length);
   };
 
@@ -164,51 +131,69 @@ function App() {
       alert("You need at least one collection tab.");
       return;
     }
-    
     if (window.confirm(`Delete collection "${collectionNames[index]}"?`)) {
       const newCollections = collections.filter((_, i) => i !== index);
       const newNames = collectionNames.filter((_, i) => i !== index);
       setCollections(newCollections);
       setCollectionNames(newNames);
-      if (activeTab >= index) {
-        setActiveTab(Math.max(0, activeTab - 1));
-      }
+      setActiveTab(Math.max(0, activeTab - 1));
     }
   };
 
-  const importToNewTab = (e) => {
+  // --- IMPORT/EXPORT FUNCTIONS ---
+  const exportJSON = () => {
+    const currentColl = collections[activeTab] || [];
+    const dataStr = JSON.stringify(currentColl, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${collectionNames[activeTab]}-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importJSON = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target.result);
         if (Array.isArray(json)) {
-          const fileName = file.name.replace('.json', '');
-          const newName = fileName || `Imported ${new Date().toLocaleDateString()}`;
-          setCollections([...collections, json]);
-          setCollectionNames([...collectionNames, newName]);
-          setActiveTab(collections.length);
-        } else {
-          alert("Invalid file format. The JSON file must contain an array.");
+          const newCols = [...collections];
+          newCols[activeTab] = json;
+          setCollections(newCols);
         }
-      } catch (err) {
-        alert("Could not read the file. Make sure it's a valid JSON.");
-      }
+      } catch (err) { alert("Could not read file."); }
     };
     reader.readAsText(file);
   };
 
-  const currentCollection = collections[activeTab] || [];
-  const totalParts = currentCollection.reduce((acc, set) => acc + (set.num_parts || 0), 0);
-
-  const themes = [...new Set(currentCollection.map(set => set.theme_id))].sort((a, b) => a - b);
-  
-  const getThemeName = (themeId) => {
-    return themeNames[themeId] || `Theme ${themeId}`;
+  const importToNewTab = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        if (Array.isArray(json)) {
+          const newName = file.name.replace('.json', '');
+          setCollections([...collections, json]);
+          setCollectionNames([...collectionNames, newName]);
+          setActiveTab(collections.length);
+        }
+      } catch (err) { alert("Could not read file."); }
+    };
+    reader.readAsText(file);
   };
 
+  // --- RENDER LOGIC ---
+  const currentCollection = collections[activeTab] || [];
+  const totalParts = currentCollection.reduce((acc, set) => acc + (set.num_parts || 0), 0);
+  const themes = [...new Set(currentCollection.map(set => set.theme_id))].sort((a, b) => a - b);
+  const getThemeName = (id) => themeNames[id] || `Theme ${id}`;
+  
   const filteredCollection = selectedTheme 
     ? currentCollection.filter(set => set.theme_id === selectedTheme)
     : currentCollection;
@@ -222,36 +207,16 @@ function App() {
         <p>Manage multiple collections in your browser.</p>
       </header>
 
+      {/* TABS SECTION */}
       <div className="tabs-container">
         <div className="tabs-header">
           <div className="tabs-list">
             {collectionNames.map((name, index) => (
-              <button
-                key={index}
-                className={`tab-button ${activeTab === index ? 'active' : ''}`}
-                onClick={() => setActiveTab(index)}
-              >
-                {name}
-                <span className="tab-count">({collections[index]?.length || 0})</span>
-                <button
-                  className="tab-rename"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    renameTab(index);
-                  }}
-                >
-                  ✎
-                </button>
+              <button key={index} className={`tab-button ${activeTab === index ? 'active' : ''}`} onClick={() => setActiveTab(index)}>
+                {name} <span className="tab-count">({collections[index]?.length || 0})</span>
+                <button className="tab-rename" onClick={(e) => { e.stopPropagation(); renameTab(index); }}>✎</button>
                 {collections.length > 1 && (
-                  <button
-                    className="tab-close"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeTab(index);
-                    }}
-                  >
-                    ×
-                  </button>
+                  <button className="tab-close" onClick={(e) => { e.stopPropagation(); removeTab(index); }}>×</button>
                 )}
               </button>
             ))}
@@ -266,48 +231,45 @@ function App() {
         </div>
       </div>
 
+      {/* SEARCH SECTION */}
       <section className="search-section">
         <h2>Search Rebrickable Database</h2>
         <form onSubmit={handleSearch} className="input-group">
-          <input 
-            type="text" 
-            placeholder="Set number or name (e.g. 10265)..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button type="submit" disabled={isLoading}>
-            Search
-          </button>
+          <div style={{ position: 'relative', flex: 1, display: 'flex' }}>
+            <input 
+              type="text" 
+              placeholder="Set number or name..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingRight: '40px' }}
+            />
+            {searchQuery && (
+              <button type="button" onClick={() => setSearchQuery('')} className="clear-input-btn">×</button>
+            )}
+          </div>
+          <button type="submit" disabled={isLoading}>Search</button>
+          {(searchResults.length > 0 || hasSearched) && (
+            <button type="button" onClick={clearSearch} className="secondary-btn">Clear Results</button>
+          )}
         </form>
 
         {isLoading ? (
-          <div className="spinner-container">
-            <span className="loader"></span>
-            <p className="loading-text">Looking for bricks...</p>
-          </div>
+          <div className="spinner-container"><span className="loader"></span><p className="loading-text">Looking for bricks...</p></div>
         ) : (
           searchResults.length > 0 && (
-            <div className="lego-grid" style={{ marginTop: '20px' }}>
+            <div className="lego-grid">
               {searchResults.map(set => {
-                const isInCollection = currentCollection.find(item => item.set_num === set.set_num);
+                const isInColl = currentCollection.find(item => item.set_num === set.set_num);
                 return (
                   <div key={set.set_num} className="lego-card">
-                    <img src={set.set_img_url || 'https://via.placeholder.com/150?text=No+Image'} alt={set.name} />
+                    <img src={set.set_img_url || 'https://via.placeholder.com/150'} alt={set.name} />
                     <div className="card-info">
                       <h3>{set.name}</h3>
-                      <p>#{set.set_num}</p>
-                      <p>{set.num_parts} pieces ({set.year})</p>
+                      <p>#{set.set_num} ({set.year})</p>
+                      <p>{set.num_parts} pieces</p>
                     </div>
-                    <button 
-                      onClick={() => addToCollection(set)}
-                      disabled={isInCollection}
-                      style={{
-                        backgroundColor: isInCollection ? '#ccc' : '',
-                        cursor: isInCollection ? 'not-allowed' : 'pointer',
-                        opacity: isInCollection ? 0.6 : 1
-                      }}
-                    >
-                      {isInCollection ? '✓ Added' : '+ Add'}
+                    <button onClick={() => addToCollection(set)} disabled={isInColl} className={isInColl ? 'btn-disabled' : ''}>
+                      {isInColl ? '✓ Added' : '+ Add'}
                     </button>
                   </div>
                 );
@@ -322,6 +284,7 @@ function App() {
 
       <hr />
 
+      {/* COLLECTION SECTION */}
       <section className="collection-section">
         <div className="collection-header">
           <div>
@@ -331,38 +294,11 @@ function App() {
               {selectedTheme && ` (${totalParts.toLocaleString()} total)`}
             </p>
             {themes.length > 0 && (
-              <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setSelectedTheme(null)}
-                  style={{
-                    padding: '6px 12px',
-                    fontSize: '14px',
-                    borderRadius: '4px',
-                    border: selectedTheme === null ? '2px solid #007bff' : '1px solid #ddd',
-                    backgroundColor: selectedTheme === null ? '#007bff' : 'white',
-                    color: selectedTheme === null ? 'white' : '#333',
-                    cursor: 'pointer',
-                    fontWeight: selectedTheme === null ? 'bold' : 'normal'
-                  }}
-                >
-                  All Themes
-                </button>
-                {themes.map(themeId => (
-                  <button
-                    key={themeId}
-                    onClick={() => setSelectedTheme(themeId)}
-                    style={{
-                      padding: '6px 12px',
-                      fontSize: '14px',
-                      borderRadius: '4px',
-                      border: selectedTheme === themeId ? '2px solid #007bff' : '1px solid #ddd',
-                      backgroundColor: selectedTheme === themeId ? '#007bff' : 'white',
-                      color: selectedTheme === themeId ? 'white' : '#333',
-                      cursor: 'pointer',
-                      fontWeight: selectedTheme === themeId ? 'bold' : 'normal'
-                    }}
-                  >
-                    {getThemeName(themeId)} ({currentCollection.filter(s => s.theme_id === themeId).length})
+              <div className="theme-filters">
+                <button onClick={() => setSelectedTheme(null)} className={selectedTheme === null ? 'theme-tag active' : 'theme-tag'}>All Themes</button>
+                {themes.map(id => (
+                  <button key={id} onClick={() => setSelectedTheme(id)} className={selectedTheme === id ? 'theme-tag active' : 'theme-tag'}>
+                    {getThemeName(id)} ({currentCollection.filter(s => s.theme_id === id).length})
                   </button>
                 ))}
               </div>
@@ -379,7 +315,7 @@ function App() {
 
         {filteredCollection.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#666', marginTop: '40px' }}>
-            {selectedTheme ? 'No sets found in this theme.' : 'This collection is empty. Search above to add your first sets!'}
+            {selectedTheme ? 'No sets found in this theme.' : 'This collection is empty.'}
           </p>
         ) : (
           <div className="lego-grid">
@@ -388,15 +324,10 @@ function App() {
                 <img src={set.set_img_url} alt={set.name} />
                 <div className="card-info">
                   <h3>{set.name}</h3>
-                  <p>#{set.set_num}</p>
-                  <p>{set.num_parts} pieces ({set.year})</p>
+                  <p>#{set.set_num} ({set.year})</p>
+                  <p>{set.num_parts} pieces</p>
                 </div>
-                <button 
-                  onClick={() => removeFromCollection(set.set_num)}
-                  style={{ backgroundColor: '#ff4444' }}
-                >
-                  Remove
-                </button>
+                <button onClick={() => removeFromCollection(set.set_num)} className="btn-remove">Remove</button>
               </div>
             ))}
           </div>
