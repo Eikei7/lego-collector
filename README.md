@@ -2,6 +2,11 @@
 
 A modern web application for managing your LEGO collection. Search through Rebrickable's extensive database and keep track of all your sets locally in your browser.
 
+<img width="920" height="863" alt="lego1" src="https://github.com/user-attachments/assets/2ef89573-3398-4100-874e-d89709b18734" />
+<img width="453" height="739" alt="lego2" src="https://github.com/user-attachments/assets/c044115c-e6ae-455e-8c79-c7747b860a48" />
+
+
+
 ## Features
 
 - **Search Rebrickable Database** - Find LEGO sets by searching for names or set numbers
