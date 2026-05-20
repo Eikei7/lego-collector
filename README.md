@@ -34,15 +34,19 @@ npm install
 
 3. Create a `.env` file in the project root and add your Rebrickable API key:
 ```
-VITE_REBRICKABLE_API_KEY=your_api_key_here
+REBRICKABLE_API_KEY=your_api_key_here
 ```
 
-4. Start the development server:
+> **Note:** The key is kept server-side and never exposed in the browser bundle. It is read by the Netlify Function in `netlify/functions/rebrickable.js`.
+
+4. Start the development server using the Netlify CLI (required to run the proxy function locally):
 ```bash
-npm run dev
+npm install -g netlify-cli   # one-time, if not already installed
+npm run build               # build once so Netlify Dev has a dist folder
+npx netlify dev
 ```
 
-5. Open [http://localhost:5173](http://localhost:5173) in your browser
+5. Open the URL shown by `netlify dev` (typically [http://localhost:8888](http://localhost:8888)) in your browser
 
 ## Build for Production
 
@@ -58,8 +62,8 @@ The project is ready for deployment on Netlify:
 
 1. Push your code to GitHub
 2. Connect your repository to Netlify
-3. Add `VITE_REBRICKABLE_API_KEY` as an environment variable in Netlify
-4. Netlify will automatically use the settings from `netlify.toml`
+3. Add `REBRICKABLE_API_KEY` as an environment variable in Netlify (Site settings → Environment variables)
+4. Netlify will automatically use the settings from `netlify.toml`, including the proxy function in `netlify/functions/`
 
 Every push to the main branch will automatically deploy the new version on Netlify.
 
