@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import './index.css';
 
 function StatsModal({ isOpen, onClose, stats }) {
@@ -83,9 +83,10 @@ function App() {
   const [showStats, setShowStats] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
+  const [toast, setToast] = useState(null);
+  const [confirmState, setConfirmState] = useState(null);
+  const [debouncedCollectionSearch, setDebouncedCollectionSearch] = useState('');
   const pageSize = 12;
-
-  const API_KEY = import.meta.env.VITE_REBRICKABLE_API_KEY;
 
   useEffect(() => {
     const savedCollections = localStorage.getItem('lego-collections');
@@ -124,11 +125,29 @@ function App() {
     localStorage.setItem('lego-theme-names', JSON.stringify(themeNames));
   }, [themeNames]);
 
+  useEffect(() => {
+    if (!collectionSearchQuery) {
+      setDebouncedCollectionSearch('');
+      return;
+    }
+    const timer = setTimeout(() => setDebouncedCollectionSearch(collectionSearchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [collectionSearchQuery]);
+
+  const showToast = useCallback((message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  const showConfirm = useCallback((message, onConfirm) => {
+    setConfirmState({ message, onConfirm });
+  }, []);
+
   const fetchMissingThemes = useCallback(async (themeIds) => {
     if (!themeIds || themeIds.length === 0) return;
     
     const promises = themeIds.map(id => 
-      fetch(`https://rebrickable.com/api/v3/lego/themes/${id}/?key=${API_KEY}`)
+      fetch(`/.netlify/functions/rebrickable?path=lego/themes/${id}/`)
         .then(r => r.json())
         .then(data => ({ [id]: data.name }))
         .catch(() => ({ [id]: `Theme ${id}` }))
@@ -137,7 +156,7 @@ function App() {
     const results = await Promise.all(promises);
     const newThemes = Object.assign({}, ...results);
     setThemeNames(prev => ({ ...prev, ...newThemes }));
-  }, [API_KEY]);
+  }, []);
 
   useEffect(() => {
     const currentCollection = collections[activeTab] || [];
@@ -159,13 +178,13 @@ function App() {
 
     try {
       const response = await fetch(
-        `https://rebrickable.com/api/v3/lego/sets/?search=${searchQuery}&page=1&page_size=${pageSize}&key=${API_KEY}`
+        `/.netlify/functions/rebrickable?path=lego/sets/&search=${encodeURIComponent(searchQuery)}&page=1&page_size=${pageSize}`
       );
       const data = await response.json();
       setSearchResults(data.results || []);
       setTotalResults(data.count || 0);
     } catch (error) {
-      alert("An error occurred while searching.");
+      showToast("An error occurred while searching.", 'error');
     } finally {
       setIsLoading(false);
     }
@@ -177,13 +196,14 @@ function App() {
     
     try {
       const response = await fetch(
-        `https://rebrickable.com/api/v3/lego/sets/?search=${searchQuery}&page=${pageNumber}&page_size=${pageSize}&key=${API_KEY}`
+        `/.netlify/functions/rebrickable?path=lego/sets/&search=${encodeURIComponent(searchQuery)}&page=${pageNumber}&page_size=${pageSize}`
       );
       const data = await response.json();
       setSearchResults(data.results || []);
+      setTotalResults(data.count || 0);
       window.scrollTo({ top: 0, behavior: 'smooth' }); 
     } catch (error) {
-      console.error("Error fetching page", error);
+      showToast("Error loading page.", 'error');
     } finally {
       setIsLoading(false);
     }
@@ -205,16 +225,16 @@ function App() {
       newCollections[activeTab] = [...currentColl, set];
       setCollections(newCollections);
     } else {
-      alert("This set is already in this collection!");
+      showToast("This set is already in this collection!", 'warning');
     }
   };
 
   const removeFromCollection = (setNum) => {
-    if (window.confirm("Do you really want to remove this set?")) {
+    showConfirm("Do you really want to remove this set?", () => {
       const newCollections = [...collections];
       newCollections[activeTab] = (newCollections[activeTab] || []).filter(item => item.set_num !== setNum);
       setCollections(newCollections);
-    }
+    });
   };
 
   const addNewTab = () => {
@@ -234,16 +254,16 @@ function App() {
 
   const removeTab = (index) => {
     if (collections.length <= 1) {
-      alert("You need at least one collection tab.");
+      showToast("You need at least one collection tab.", 'warning');
       return;
     }
-    if (window.confirm(`Delete collection "${collectionNames[index]}"?`)) {
+    showConfirm(`Delete collection "${collectionNames[index]}"?`, () => {
       const newCollections = collections.filter((_, i) => i !== index);
       const newNames = collectionNames.filter((_, i) => i !== index);
       setCollections(newCollections);
       setCollectionNames(newNames);
       setActiveTab(Math.max(0, activeTab - 1));
-    }
+    });
   };
 
   const exportJSON = () => {
@@ -270,7 +290,7 @@ function App() {
           newCols[activeTab] = json;
           setCollections(newCols);
         }
-      } catch (err) { alert("Could not read file."); }
+      } catch (err) { showToast("Could not read file.", 'error'); }
     };
     reader.readAsText(file);
   };
@@ -288,47 +308,63 @@ function App() {
           setCollectionNames([...collectionNames, newName]);
           setActiveTab(collections.length);
         }
-      } catch (err) { alert("Could not read file."); }
+      } catch (err) { showToast("Could not read file.", 'error'); }
     };
     reader.readAsText(file);
   };
 
-  const currentCollection = collections[activeTab] || [];
-  const totalParts = currentCollection.reduce((acc, set) => acc + (set.num_parts || 0), 0);
-  const themes = [...new Set(currentCollection.map(set => set.theme_id))].sort((a, b) => a - b);
-  const getThemeName = (id) => themeNames[id] || `Theme ${id}`;
-  
-  let filteredCollection = selectedTheme 
-    ? currentCollection.filter(set => set.theme_id === selectedTheme)
-    : currentCollection;
+  const currentCollection = useMemo(() => collections[activeTab] || [], [collections, activeTab]);
 
-  if (collectionSearchQuery) {
-    filteredCollection = filteredCollection.filter(set => 
-      set.name.toLowerCase().includes(collectionSearchQuery.toLowerCase()) ||
-      set.set_num.toLowerCase().includes(collectionSearchQuery.toLowerCase())
-    );
-  }
+  const totalParts = useMemo(
+    () => currentCollection.reduce((acc, set) => acc + (set.num_parts || 0), 0),
+    [currentCollection]
+  );
 
-  const sortedCollection = [...filteredCollection].sort((a, b) => {
+  const themes = useMemo(
+    () => [...new Set(currentCollection.map(set => set.theme_id))].sort((a, b) => a - b),
+    [currentCollection]
+  );
+
+  const getThemeName = useCallback((id) => themeNames[id] || `Theme ${id}`, [themeNames]);
+
+  const filteredCollection = useMemo(() => {
+    let result = selectedTheme
+      ? currentCollection.filter(set => set.theme_id === selectedTheme)
+      : currentCollection;
+    if (debouncedCollectionSearch) {
+      const q = debouncedCollectionSearch.toLowerCase();
+      result = result.filter(set =>
+        set.name.toLowerCase().includes(q) ||
+        set.set_num.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [currentCollection, selectedTheme, debouncedCollectionSearch]);
+
+  const sortedCollection = useMemo(() => [...filteredCollection].sort((a, b) => {
     let comparison = 0;
-    switch(sortBy) {
+    switch (sortBy) {
       case 'name': comparison = a.name.localeCompare(b.name); break;
       case 'year': comparison = (a.year || 0) - (b.year || 0); break;
       case 'parts': comparison = (a.num_parts || 0) - (b.num_parts || 0); break;
       case 'set_num': comparison = a.set_num.localeCompare(b.set_num); break;
-      case 'theme': 
+      case 'theme': {
         const themeA = getThemeName(a.theme_id);
         const themeB = getThemeName(b.theme_id);
         comparison = themeA.localeCompare(themeB);
         break;
+      }
       default: comparison = 0;
     }
     return sortOrder === 'asc' ? comparison : -comparison;
-  });
+  }), [filteredCollection, sortBy, sortOrder, getThemeName]);
 
-  const filteredTotalParts = filteredCollection.reduce((acc, set) => acc + (set.num_parts || 0), 0);
+  const filteredTotalParts = useMemo(
+    () => filteredCollection.reduce((acc, set) => acc + (set.num_parts || 0), 0),
+    [filteredCollection]
+  );
 
-  const stats = {
+  const stats = useMemo(() => ({
     totalSets: currentCollection.length,
     totalParts: totalParts,
     avgParts: currentCollection.length > 0 ? Math.round(totalParts / currentCollection.length) : 0,
@@ -342,8 +378,8 @@ function App() {
       acc[year] = (acc[year] || 0) + 1;
       return acc;
     }, {})).sort((a, b) => b[0] - a[0]).slice(0, 10)
-  };
- 
+  }), [currentCollection, totalParts, themes, getThemeName]);
+
   return (
     <div className="container">
       <header>
@@ -410,7 +446,7 @@ function App() {
                 const isInColl = currentCollection.find(item => item.set_num === set.set_num);
                 return (
                   <div key={set.set_num} className="lego-card">
-                    <img src={set.set_img_url || 'https://via.placeholder.com/150'} alt={set.name} />
+                    <img src={set.set_img_url} alt={set.name} onError={e => { e.target.onerror = null; e.target.src = '/icons8-lego-96.png'; }} />
                     <div className="card-info">
                       <h3>{set.name}</h3>
                       <p>#{set.set_num} ({set.year})</p>
@@ -533,6 +569,18 @@ function App() {
         <p className='credits'>Made by <a href="https://frontend-erik.se" target="_blank" rel="noopener noreferrer">Erik Karlsson</a></p>
       </footer>
       <StatsModal isOpen={showStats} onClose={() => setShowStats(false)} stats={stats} />
+      {confirmState && (
+        <div className="modal-overlay" onClick={() => setConfirmState(null)}>
+          <div className="modal-content confirm-modal" onClick={e => e.stopPropagation()}>
+            <p>{confirmState.message}</p>
+            <div className="confirm-buttons">
+              <button onClick={() => { confirmState.onConfirm(); setConfirmState(null); }}>Confirm</button>
+              <button onClick={() => setConfirmState(null)} className="secondary-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {toast && <div className={`toast toast-${toast.type}`}>{toast.message}</div>}
     </div>
   );
 }

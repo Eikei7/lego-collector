@@ -955,3 +955,47 @@ input[type="text"]:focus {
 body:has(.modal-overlay) {
   overflow: hidden;
 }
+
+/* Confirm modal */
+.confirm-modal {
+  max-width: 400px;
+  text-align: center;
+}
+
+.confirm-modal p {
+  font-size: 1.05rem;
+  color: var(--text-main);
+  margin: 0 0 25px 0;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 24px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  z-index: 2000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  animation: toast-in 0.2s ease;
+  white-space: nowrap;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.toast-info    { background-color: var(--lego-blue); }
+.toast-warning { background-color: #e67e00; }
+.toast-error   { background-color: var(--lego-red); }
