@@ -1,8 +1,7 @@
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const params = event.queryStringParameters || {};
   const path = params.path;
 
-  // Validate: only allow lego/* paths to prevent SSRF
   if (!path || !/^lego\/[\w\-\/]+\/?$/.test(path)) {
     return {
       statusCode: 400,
